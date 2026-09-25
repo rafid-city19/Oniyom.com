@@ -18,7 +18,7 @@ function IssueDetails() {
     const fetchReport = async () => {
       try {
         const response = await fetch(
-          `http://localhost:5000/api/reports/${id}`
+          `http://import.meta.env.VITE_API_URL/api/reports/${id}`
         );
 
         const data = await response.json();
@@ -202,7 +202,7 @@ function IssueDetails() {
         {report.image && (
           <div className="mt-10 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950">
             <img
-              src={`http://localhost:5000${report.image}`}
+              src={`http://import.meta.env.VITE_API_URL${report.image}`}
               alt={report.title}
               className="max-h-[550px] w-full object-cover"
             />

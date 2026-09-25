@@ -31,7 +31,7 @@ function AdminDashboard() {
       }
 
       const response = await fetch(
-        "http://localhost:5000/api/admin/reports",
+        "http://import.meta.env.VITE_API_URL/api/admin/reports",
         {
           method: "GET",
           headers: {
@@ -104,7 +104,7 @@ function AdminDashboard() {
         localStorage.getItem("token");
 
       const response = await fetch(
-        `http://localhost:5000/api/admin/reports/${reportId}/status`,
+        `http://import.meta.env.VITE_API_URL/api/admin/reports/${reportId}/status`,
         {
           method: "PATCH",
 
@@ -190,7 +190,7 @@ function AdminDashboard() {
         localStorage.getItem("token");
 
       const response = await fetch(
-        `http://localhost:5000/api/admin/reports/${reportId}`,
+        `http://import.meta.env.VITE_API_URL/api/admin/reports/${reportId}`,
         {
           method: "DELETE",
 

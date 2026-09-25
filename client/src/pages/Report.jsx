@@ -85,7 +85,7 @@ function Report() {
       }
 
       const response = await fetch(
-        "http://localhost:5000/api/reports",
+        "http://import.meta.env.VITE_API_URL/api/reports",
         {
           method: "POST",
 

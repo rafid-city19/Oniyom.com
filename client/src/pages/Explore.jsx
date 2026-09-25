@@ -132,7 +132,7 @@ function Explore() {
         setLoading(true);
 
         const response = await fetch(
-          "http://localhost:5000/api/reports"
+          "http://import.meta.env.VITE_API_URL/api/reports"
         );
 
         const data =
@@ -853,7 +853,7 @@ function Explore() {
                       <div className="h-52 overflow-hidden bg-zinc-900">
 
                         <img
-                          src={`http://localhost:5000${report.image}`}
+                          src={`http://import.meta.env.VITE_API_URL${report.image}`}
                           alt={report.title}
                           className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                         />
@@ -1074,7 +1074,7 @@ function Explore() {
 
                             {report.image && (
                               <img
-                                src={`http://localhost:5000${report.image}`}
+                                src={`http://import.meta.env.VITE_API_URL${report.image}`}
                                 alt={report.title}
                                 className="mb-3 h-28 w-full rounded-lg object-cover"
                               />

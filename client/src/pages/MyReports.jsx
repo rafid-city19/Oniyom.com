@@ -24,7 +24,7 @@ function MyReports() {
       }
 
       const response = await fetch(
-        "http://localhost:5000/api/reports/my-reports",
+        "http://import.meta.env.VITE_API_URL/api/reports/my-reports",
         {
           method: "GET",
           headers: {
@@ -100,7 +100,7 @@ function MyReports() {
       }
 
       const response = await fetch(
-        `http://localhost:5000/api/reports/my-reports/${reportId}`,
+        `http://import.meta.env.VITE_API_URL/api/reports/my-reports/${reportId}`,
         {
           method: "DELETE",
           headers: {
@@ -397,7 +397,7 @@ function MyReports() {
                       <div className="h-52 overflow-hidden bg-zinc-900">
 
                         <img
-                          src={`http://localhost:5000${report.image}`}
+                          src={`http://import.meta.env.VITE_API_URL${report.image}`}
                           alt={report.title}
                           className="h-full w-full object-cover"
                         />

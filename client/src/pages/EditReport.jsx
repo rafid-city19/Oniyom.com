@@ -58,7 +58,7 @@ function EditReport() {
 
       try {
         const response = await fetch(
-          `http://localhost:5000/api/reports/${id}`
+          `http://import.meta.env.VITE_API_URL/api/reports/${id}`
         );
 
         const data =
@@ -207,7 +207,7 @@ function EditReport() {
       }
 
       const response = await fetch(
-        `http://localhost:5000/api/reports/my-reports/${id}`,
+        `http://import.meta.env.VITE_API_URL/api/reports/my-reports/${id}`,
         {
           method: "PUT",
 
@@ -446,7 +446,7 @@ function EditReport() {
 
               <div className="overflow-hidden rounded-xl border border-zinc-800">
                 <img
-                  src={`http://localhost:5000${currentImage}`}
+                  src={`http://import.meta.env.VITE_API_URL${currentImage}`}
                   alt="Current report"
                   className="max-h-80 w-full object-cover"
                 />
