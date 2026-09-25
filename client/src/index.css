@@ -1,0 +1,29 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700;800;900&display=swap');
+
+@import "tailwindcss";
+
+:root {
+  font-family: "Noto Sans Bengali", sans-serif;
+  color: #111111;
+  background: #f7f8f6;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: #f7f8f6;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+@import "leaflet/dist/leaflet.css";
