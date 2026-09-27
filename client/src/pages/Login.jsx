@@ -1,38 +1,26 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-
 import { useAuth } from "../context/AuthContext";
 
 function Login() {
   const navigate = useNavigate();
-
-  const { user, login } = useAuth();
+  const { login } = useAuth();
 
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
 
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      navigate("/my-reports", {
-        replace: true,
-      });
-    }
-  }, [user, navigate]);
-
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    setLoading(true);
     setError("");
-    setSuccess("");
+    setLoading(true);
 
     try {
       const response = await fetch(
-        "http://import.meta.env.VITE_API_URL/api/auth/login",
+        `${import.meta.env.VITE_API_URL}/api/auth/login`,
         {
           method: "POST",
 
@@ -41,7 +29,7 @@ function Login() {
           },
 
           body: JSON.stringify({
-            phone: phone.trim(),
+            phone,
             password,
           }),
         }
@@ -49,73 +37,27 @@ function Login() {
 
       const data = await response.json();
 
-      console.log(
-        "Login response:",
-        data
-      );
-
       if (!response.ok) {
-        setError(
-          data.message ||
-            "লগইন করা যায়নি"
+        throw new Error(
+          data.message || "Login failed"
         );
-
-        return;
       }
 
-      if (!data.token) {
-        setError(
-          "Login সফল হয়েছে, কিন্তু token পাওয়া যায়নি"
-        );
+      // Save authentication data
+      login(data);
 
-        console.error(
-          "No token received:",
-          data
-        );
-
-        return;
+      // Redirect
+      if (data.user?.role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/");
       }
-
-      if (!data.user) {
-        setError(
-          "Login সফল হয়েছে, কিন্তু user তথ্য পাওয়া যায়নি"
-        );
-
-        console.error(
-          "No user received:",
-          data
-        );
-
-        return;
-      }
-
-      login(
-        data.token,
-        data.user
-      );
-
-      setSuccess(
-        "লগইন সফল হয়েছে"
-      );
-
-      console.log(
-        "Logged in user:",
-        data.user
-      );
-
-      setTimeout(() => {
-        navigate("/my-reports", {
-          replace: true,
-        });
-      }, 500);
     } catch (error) {
-      console.error(
-        "Login error:",
-        error
-      );
+      console.error("Login error:", error);
 
       setError(
-        "সার্ভারের সাথে সংযোগ করা যাচ্ছে না"
+        error.message ||
+          "Something went wrong"
       );
     } finally {
       setLoading(false);
@@ -123,143 +65,107 @@ function Login() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#08090b] px-6 pt-20 text-white">
+    <div className="flex min-h-screen items-center justify-center bg-[#08090b] px-6 text-white">
 
       <div className="w-full max-w-md">
 
-        {/* Header */}
-
         <div className="mb-8 text-center">
-
           <h1 className="text-4xl font-bold">
-            আবার স্বাগতম
+            Welcome Back
           </h1>
 
-          <p className="mt-3 text-zinc-400">
-            আপনার Oniyom অ্যাকাউন্টে লগইন করুন
+          <p className="mt-2 text-zinc-500">
+            Login to your Oniyom account
           </p>
-
         </div>
 
-
-        {/* Form */}
-
         <form
-          onSubmit={handleLogin}
-          className="space-y-5 rounded-2xl border border-zinc-800 bg-zinc-950 p-6"
+          onSubmit={handleSubmit}
+          className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6"
         >
 
-          {/* Error */}
-
           {error && (
-            <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+            <div className="mb-5 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
               {error}
             </div>
           )}
 
+          {/* PHONE */}
 
-          {/* Success */}
-
-          {success && (
-            <div className="rounded-lg border border-[#B7FF00]/30 bg-[#B7FF00]/10 px-4 py-3 text-sm text-[#B7FF00]">
-              {success}
-            </div>
-          )}
-
-
-          {/* Phone */}
-
-          <div>
-
-            <label className="mb-2 block text-sm text-zinc-300">
-              ফোন নম্বর
+          <div className="mb-5">
+            <label className="mb-2 block text-sm text-zinc-400">
+              Phone Number
             </label>
 
             <input
               type="tel"
-              placeholder="01XXXXXXXXX"
               value={phone}
               onChange={(e) =>
                 setPhone(e.target.value)
               }
+              placeholder="01XXXXXXXXX"
               required
-              autoComplete="tel"
-              inputMode="tel"
-              className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none transition placeholder:text-zinc-600 focus:border-[#B7FF00] focus:ring-1 focus:ring-[#B7FF00]"
+              className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-lime-400"
             />
-
           </div>
 
+          {/* PASSWORD */}
 
-          {/* Password */}
-
-          <div>
-
-            <label className="mb-2 block text-sm text-zinc-300">
-              পাসওয়ার্ড
+          <div className="mb-3">
+            <label className="mb-2 block text-sm text-zinc-400">
+              Password
             </label>
 
             <input
               type="password"
-              placeholder="আপনার পাসওয়ার্ড"
               value={password}
               onChange={(e) =>
                 setPassword(e.target.value)
               }
+              placeholder="Enter your password"
               required
-              autoComplete="current-password"
-              className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none transition placeholder:text-zinc-600 focus:border-[#B7FF00] focus:ring-1 focus:ring-[#B7FF00]"
+              className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-lime-400"
             />
-
           </div>
 
+          {/* FORGOT PASSWORD */}
 
-          {/* Forgot Password */}
-
-          <div className="text-right">
-
+          <div className="mb-6 text-right">
             <Link
               to="/forgot-password"
-              className="text-sm text-zinc-400 transition hover:text-[#B7FF00]"
+              className="text-sm text-lime-400 transition hover:text-lime-300"
             >
-              পাসওয়ার্ড ভুলে গেছেন?
+              Forgot password?
             </Link>
-
           </div>
 
-
-          {/* Login Button */}
+          {/* LOGIN */}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-[#B7FF00] px-4 py-3 font-semibold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-lg bg-lime-400 py-3 font-semibold text-black transition hover:bg-lime-300 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading
-              ? "লগইন হচ্ছে..."
-              : "লগইন"}
+              ? "Logging in..."
+              : "Login"}
           </button>
 
+          {/* REGISTER */}
 
-          {/* Register */}
-
-          <p className="text-center text-sm text-zinc-400">
-
-            অ্যাকাউন্ট নেই?{" "}
+          <p className="mt-6 text-center text-sm text-zinc-500">
+            Don't have an account?{" "}
 
             <Link
               to="/register"
-              className="text-[#B7FF00] hover:underline"
+              className="text-lime-400 hover:text-lime-300"
             >
-              রেজিস্টার করুন
+              Register
             </Link>
-
           </p>
 
         </form>
-
       </div>
-
     </div>
   );
 }

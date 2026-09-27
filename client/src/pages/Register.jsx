@@ -1,12 +1,10 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-
 import { useAuth } from "../context/AuthContext";
 
 function Register() {
   const navigate = useNavigate();
-
-  const { user, login } = useAuth();
+  const { login } = useAuth();
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -14,42 +12,24 @@ function Register() {
   const [confirmPassword, setConfirmPassword] =
     useState("");
 
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      navigate("/my-reports", {
-        replace: true,
-      });
-    }
-  }, [user, navigate]);
-
-  const handleRegister = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     setError("");
 
-    if (name.trim().length < 2) {
-      setError("সঠিক নাম দিন");
+    // Check passwords
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
       return;
     }
 
-    if (!phone.trim()) {
-      setError("ফোন নম্বর দিন");
-      return;
-    }
-
+    // Basic password validation
     if (password.length < 6) {
       setError(
-        "পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে"
-      );
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError(
-        "দুইটি পাসওয়ার্ড একই নয়"
+        "Password must be at least 6 characters"
       );
       return;
     }
@@ -58,7 +38,7 @@ function Register() {
 
     try {
       const response = await fetch(
-        "http://import.meta.env.VITE_API_URL/api/auth/register",
+        `${import.meta.env.VITE_API_URL}/api/auth/register`,
         {
           method: "POST",
 
@@ -67,8 +47,8 @@ function Register() {
           },
 
           body: JSON.stringify({
-            name: name.trim(),
-            phone: phone.trim(),
+            name,
+            phone,
             password,
           }),
         }
@@ -76,54 +56,16 @@ function Register() {
 
       const data = await response.json();
 
-      console.log(
-        "Register response:",
-        data
-      );
-
       if (!response.ok) {
-        setError(
-          data.message ||
-            "রেজিস্টার করা যায়নি"
+        throw new Error(
+          data.message || "Registration failed"
         );
-
-        return;
       }
 
-      if (!data.token) {
-        setError(
-          "অ্যাকাউন্ট তৈরি হয়েছে, কিন্তু token পাওয়া যায়নি"
-        );
+      // Automatically login after registration
+      login(data);
 
-        console.error(
-          "No token received:",
-          data
-        );
-
-        return;
-      }
-
-      if (!data.user) {
-        setError(
-          "অ্যাকাউন্ট তৈরি হয়েছে, কিন্তু user তথ্য পাওয়া যায়নি"
-        );
-
-        console.error(
-          "No user received:",
-          data
-        );
-
-        return;
-      }
-
-      login(
-        data.token,
-        data.user
-      );
-
-      navigate("/my-reports", {
-        replace: true,
-      });
+      navigate("/");
     } catch (error) {
       console.error(
         "Register error:",
@@ -131,7 +73,8 @@ function Register() {
       );
 
       setError(
-        "সার্ভারের সাথে সংযোগ করা যাচ্ছে না"
+        error.message ||
+          "Something went wrong"
       );
     } finally {
       setLoading(false);
@@ -139,174 +82,148 @@ function Register() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#08090b] px-6 py-24 text-white">
+    <div className="flex min-h-screen items-center justify-center bg-[#08090b] px-6 py-12 text-white">
 
       <div className="w-full max-w-md">
-
-        {/* Header */}
 
         <div className="mb-8 text-center">
 
           <h1 className="text-4xl font-bold">
-            অ্যাকাউন্ট তৈরি করুন
+            Create Account
           </h1>
 
-          <p className="mt-3 text-zinc-400">
-            Oniyom-এর সাথে যুক্ত হোন
+          <p className="mt-2 text-zinc-500">
+            Join Oniyom today
           </p>
 
         </div>
 
-
-        {/* Form */}
-
         <form
-          onSubmit={handleRegister}
-          className="space-y-5 rounded-2xl border border-zinc-800 bg-zinc-950 p-6"
+          onSubmit={handleSubmit}
+          className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6"
         >
 
-          {/* Error */}
-
           {error && (
-            <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+            <div className="mb-5 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
               {error}
             </div>
           )}
 
+          {/* NAME */}
 
-          {/* Name */}
+          <div className="mb-5">
 
-          <div>
-
-            <label className="mb-2 block text-sm text-zinc-300">
-              নাম
+            <label className="mb-2 block text-sm text-zinc-400">
+              Full Name
             </label>
 
             <input
               type="text"
-              placeholder="আপনার নাম"
               value={name}
               onChange={(e) =>
                 setName(e.target.value)
               }
+              placeholder="Your name"
               required
-              autoComplete="name"
-              className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none transition placeholder:text-zinc-600 focus:border-[#B7FF00] focus:ring-1 focus:ring-[#B7FF00]"
+              className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-lime-400"
             />
 
           </div>
 
+          {/* PHONE */}
 
-          {/* Phone */}
+          <div className="mb-5">
 
-          <div>
-
-            <label className="mb-2 block text-sm text-zinc-300">
-              ফোন নম্বর
+            <label className="mb-2 block text-sm text-zinc-400">
+              Phone Number
             </label>
 
             <input
               type="tel"
-              placeholder="01XXXXXXXXX"
               value={phone}
               onChange={(e) =>
                 setPhone(e.target.value)
               }
+              placeholder="01XXXXXXXXX"
               required
-              autoComplete="tel"
-              inputMode="tel"
-              className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none transition placeholder:text-zinc-600 focus:border-[#B7FF00] focus:ring-1 focus:ring-[#B7FF00]"
+              className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-lime-400"
             />
-
-            <p className="mt-2 text-xs text-zinc-600">
-              আপনার সক্রিয় ফোন নম্বর ব্যবহার করুন
-            </p>
 
           </div>
 
+          {/* PASSWORD */}
 
-          {/* Password */}
+          <div className="mb-5">
 
-          <div>
-
-            <label className="mb-2 block text-sm text-zinc-300">
-              পাসওয়ার্ড
+            <label className="mb-2 block text-sm text-zinc-400">
+              Password
             </label>
 
             <input
               type="password"
-              placeholder="কমপক্ষে ৬ অক্ষর"
               value={password}
               onChange={(e) =>
                 setPassword(e.target.value)
               }
+              placeholder="Minimum 6 characters"
               required
-              minLength={6}
-              autoComplete="new-password"
-              className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none transition placeholder:text-zinc-600 focus:border-[#B7FF00] focus:ring-1 focus:ring-[#B7FF00]"
+              className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-lime-400"
             />
 
           </div>
 
+          {/* CONFIRM PASSWORD */}
 
-          {/* Confirm Password */}
+          <div className="mb-6">
 
-          <div>
-
-            <label className="mb-2 block text-sm text-zinc-300">
-              পাসওয়ার্ড আবার দিন
+            <label className="mb-2 block text-sm text-zinc-400">
+              Confirm Password
             </label>
 
             <input
               type="password"
-              placeholder="পাসওয়ার্ড আবার লিখুন"
               value={confirmPassword}
               onChange={(e) =>
                 setConfirmPassword(
                   e.target.value
                 )
               }
+              placeholder="Confirm your password"
               required
-              minLength={6}
-              autoComplete="new-password"
-              className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none transition placeholder:text-zinc-600 focus:border-[#B7FF00] focus:ring-1 focus:ring-[#B7FF00]"
+              className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-lime-400"
             />
 
           </div>
 
-
-          {/* Submit */}
+          {/* REGISTER */}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-[#B7FF00] px-4 py-3 font-semibold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full rounded-lg bg-lime-400 py-3 font-semibold text-black transition hover:bg-lime-300 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading
-              ? "অ্যাকাউন্ট তৈরি হচ্ছে..."
-              : "রেজিস্টার"}
+              ? "Creating account..."
+              : "Create Account"}
           </button>
 
+          {/* LOGIN */}
 
-          {/* Login link */}
+          <p className="mt-6 text-center text-sm text-zinc-500">
 
-          <p className="text-center text-sm text-zinc-400">
-
-            আগে থেকেই অ্যাকাউন্ট আছে?{" "}
+            Already have an account?{" "}
 
             <Link
               to="/login"
-              className="text-[#B7FF00] hover:underline"
+              className="text-lime-400 hover:text-lime-300"
             >
-              লগইন করুন
+              Login
             </Link>
 
           </p>
 
         </form>
-
       </div>
-
     </div>
   );
 }
