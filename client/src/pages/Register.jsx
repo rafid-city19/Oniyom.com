@@ -9,8 +9,7 @@ function Register() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] =
-    useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -20,6 +19,15 @@ function Register() {
 
     setError("");
 
+    // Check API URL
+    const API_URL = import.meta.env.VITE_API_URL;
+
+    if (!API_URL) {
+      setError("API URL is not configured.");
+      console.error("VITE_API_URL is missing.");
+      return;
+    }
+
     // Check passwords
     if (password !== confirmPassword) {
       setError("Passwords do not match");
@@ -28,9 +36,7 @@ function Register() {
 
     // Basic password validation
     if (password.length < 6) {
-      setError(
-        "Password must be at least 6 characters"
-      );
+      setError("Password must be at least 6 characters");
       return;
     }
 
@@ -38,7 +44,7 @@ function Register() {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/auth/register`,
+        `${API_URL}/api/auth/register`,
         {
           method: "POST",
 
@@ -67,14 +73,10 @@ function Register() {
 
       navigate("/");
     } catch (error) {
-      console.error(
-        "Register error:",
-        error
-      );
+      console.error("Register error:", error);
 
       setError(
-        error.message ||
-          "Something went wrong"
+        error.message || "Something went wrong"
       );
     } finally {
       setLoading(false);
@@ -110,7 +112,6 @@ function Register() {
           )}
 
           {/* NAME */}
-
           <div className="mb-5">
 
             <label className="mb-2 block text-sm text-zinc-400">
@@ -120,9 +121,7 @@ function Register() {
             <input
               type="text"
               value={name}
-              onChange={(e) =>
-                setName(e.target.value)
-              }
+              onChange={(e) => setName(e.target.value)}
               placeholder="Your name"
               required
               className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-lime-400"
@@ -131,7 +130,6 @@ function Register() {
           </div>
 
           {/* PHONE */}
-
           <div className="mb-5">
 
             <label className="mb-2 block text-sm text-zinc-400">
@@ -141,9 +139,7 @@ function Register() {
             <input
               type="tel"
               value={phone}
-              onChange={(e) =>
-                setPhone(e.target.value)
-              }
+              onChange={(e) => setPhone(e.target.value)}
               placeholder="01XXXXXXXXX"
               required
               className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-lime-400"
@@ -152,7 +148,6 @@ function Register() {
           </div>
 
           {/* PASSWORD */}
-
           <div className="mb-5">
 
             <label className="mb-2 block text-sm text-zinc-400">
@@ -162,9 +157,7 @@ function Register() {
             <input
               type="password"
               value={password}
-              onChange={(e) =>
-                setPassword(e.target.value)
-              }
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="Minimum 6 characters"
               required
               className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-3 text-white outline-none transition focus:border-lime-400"
@@ -173,7 +166,6 @@ function Register() {
           </div>
 
           {/* CONFIRM PASSWORD */}
-
           <div className="mb-6">
 
             <label className="mb-2 block text-sm text-zinc-400">
@@ -184,9 +176,7 @@ function Register() {
               type="password"
               value={confirmPassword}
               onChange={(e) =>
-                setConfirmPassword(
-                  e.target.value
-                )
+                setConfirmPassword(e.target.value)
               }
               placeholder="Confirm your password"
               required
@@ -196,7 +186,6 @@ function Register() {
           </div>
 
           {/* REGISTER */}
-
           <button
             type="submit"
             disabled={loading}
@@ -208,7 +197,6 @@ function Register() {
           </button>
 
           {/* LOGIN */}
-
           <p className="mt-6 text-center text-sm text-zinc-500">
 
             Already have an account?{" "}
