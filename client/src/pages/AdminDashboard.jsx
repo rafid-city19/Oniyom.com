@@ -3,6 +3,18 @@ import { Link } from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
 
+// ========================================
+// API URL
+// ========================================
+
+const API_URL = (
+  import.meta.env.VITE_API_URL || ""
+).replace(/\/$/, "");
+
+// ========================================
+// ADMIN DASHBOARD
+// ========================================
+
 function AdminDashboard() {
   const { user } = useAuth();
 
@@ -31,7 +43,7 @@ function AdminDashboard() {
       }
 
       const response = await fetch(
-        "http://import.meta.env.VITE_API_URL/api/admin/reports",
+        `${API_URL}/api/admin/reports`,
         {
           method: "GET",
           headers: {
@@ -103,8 +115,13 @@ function AdminDashboard() {
       const token =
         localStorage.getItem("token");
 
+      if (!token) {
+        setError("আপনি লগইন করেননি");
+        return;
+      }
+
       const response = await fetch(
-        `http://import.meta.env.VITE_API_URL/api/admin/reports/${reportId}/status`,
+        `${API_URL}/api/admin/reports/${reportId}/status`,
         {
           method: "PATCH",
 
@@ -189,8 +206,13 @@ function AdminDashboard() {
       const token =
         localStorage.getItem("token");
 
+      if (!token) {
+        setError("আপনি লগইন করেননি");
+        return;
+      }
+
       const response = await fetch(
-        `http://import.meta.env.VITE_API_URL/api/admin/reports/${reportId}`,
+        `${API_URL}/api/admin/reports/${reportId}`,
         {
           method: "DELETE",
 
@@ -301,6 +323,10 @@ function AdminDashboard() {
       (report) =>
         report.status === "resolved"
     ).length;
+
+  // ========================================
+  // UI
+  // ========================================
 
   return (
     <div className="min-h-screen bg-[#08090b] px-6 pb-20 pt-28 text-white">
