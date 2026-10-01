@@ -3,6 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 
 import LocationPicker from "../components/LocationPicker";
 
+// API URL from Vercel environment variables
+const API_URL = import.meta.env.VITE_API_URL;
+
 function Report() {
   const navigate = useNavigate();
 
@@ -24,10 +27,7 @@ function Report() {
   // LOCATION
   // ==========================================
 
-  const handleLocationChange = ({
-    latitude,
-    longitude,
-  }) => {
+  const handleLocationChange = ({ latitude, longitude }) => {
     setLatitude(latitude);
     setLongitude(longitude);
   };
@@ -49,43 +49,51 @@ function Report() {
       return;
     }
 
+    // Check API URL
+    if (!API_URL) {
+      console.error("VITE_API_URL is not defined");
+
+      setError(
+        "সার্ভার URL পাওয়া যাচ্ছে না। Vercel Environment Variable চেক করুন।"
+      );
+
+      return;
+    }
+
     try {
       setLoading(true);
 
       const formData = new FormData();
 
+      // Basic report information
       formData.append("title", title);
-      formData.append(
-        "description",
-        description
-      );
+      formData.append("description", description);
       formData.append("category", category);
 
-      formData.append(
-        "location[address]",
-        address
-      );
+      // Location address
+      formData.append("location[address]", address);
 
+      // Latitude
       if (latitude !== "") {
-        formData.append(
-          "location[latitude]",
-          latitude
-        );
+        formData.append("location[latitude]", latitude);
       }
 
+      // Longitude
       if (longitude !== "") {
-        formData.append(
-          "location[longitude]",
-          longitude
-        );
+        formData.append("location[longitude]", longitude);
       }
 
+      // Image
       if (image) {
         formData.append("image", image);
       }
 
+      // ==========================================
+      // API REQUEST
+      // ==========================================
+
       const response = await fetch(
-        "http://import.meta.env.VITE_API_URL/api/reports",
+        `${API_URL}/api/reports`,
         {
           method: "POST",
 
@@ -97,6 +105,7 @@ function Report() {
         }
       );
 
+      // Try to parse JSON safely
       const data = await response.json();
 
       if (!response.ok) {
@@ -104,13 +113,19 @@ function Report() {
           data.message ||
             "রিপোর্ট জমা দেওয়া যায়নি"
         );
+
         return;
       }
+
+      // ==========================================
+      // SUCCESS
+      // ==========================================
 
       setSuccess(
         "রিপোর্ট সফলভাবে জমা হয়েছে"
       );
 
+      // Clear form
       setTitle("");
       setDescription("");
       setCategory("");
@@ -119,6 +134,7 @@ function Report() {
       setLongitude("");
       setImage(null);
 
+      // Redirect after 1 second
       setTimeout(() => {
         navigate("/my-reports");
       }, 1000);
@@ -141,7 +157,9 @@ function Report() {
     <div className="min-h-screen bg-[#08090b] px-6 py-12 text-white">
       <div className="mx-auto max-w-3xl">
 
-        {/* Back */}
+        {/* ==========================================
+            BACK
+        ========================================== */}
 
         <Link
           to="/"
@@ -150,7 +168,9 @@ function Report() {
           ← হোমে ফিরে যান
         </Link>
 
-        {/* Header */}
+        {/* ==========================================
+            HEADER
+        ========================================== */}
 
         <div className="mt-8">
           <p className="text-sm font-medium tracking-wider text-[#B7FF00]">
@@ -166,14 +186,18 @@ function Report() {
           </p>
         </div>
 
-        {/* Form */}
+        {/* ==========================================
+            FORM
+        ========================================== */}
 
         <form
           onSubmit={handleSubmit}
           className="mt-10 space-y-6"
         >
 
-          {/* Title */}
+          {/* ==========================================
+              TITLE
+          ========================================== */}
 
           <div>
             <label className="mb-2 block text-sm text-zinc-300">
@@ -192,7 +216,9 @@ function Report() {
             />
           </div>
 
-          {/* Category */}
+          {/* ==========================================
+              CATEGORY
+          ========================================== */}
 
           <div>
             <label className="mb-2 block text-sm text-zinc-300">
@@ -241,7 +267,9 @@ function Report() {
             </select>
           </div>
 
-          {/* Description */}
+          {/* ==========================================
+              DESCRIPTION
+          ========================================== */}
 
           <div>
             <label className="mb-2 block text-sm text-zinc-300">
@@ -262,11 +290,14 @@ function Report() {
             />
           </div>
 
-          {/* Image */}
+          {/* ==========================================
+              IMAGE
+          ========================================== */}
 
           <div>
             <label className="mb-2 block text-sm text-zinc-300">
               সমস্যার ছবি
+
               <span className="ml-2 text-zinc-600">
                 (ঐচ্ছিক)
               </span>
@@ -279,8 +310,7 @@ function Report() {
                 accept="image/jpeg,image/jpg,image/png,image/webp"
                 onChange={(e) =>
                   setImage(
-                    e.target.files?.[0] ||
-                      null
+                    e.target.files?.[0] || null
                   )
                 }
                 className="block w-full text-sm text-zinc-400 file:mr-4 file:rounded-lg file:border-0 file:bg-[#B7FF00] file:px-4 file:py-2 file:font-semibold file:text-black"
@@ -299,7 +329,9 @@ function Report() {
             </div>
           </div>
 
-          {/* Address */}
+          {/* ==========================================
+              ADDRESS
+          ========================================== */}
 
           <div>
             <label className="mb-2 block text-sm text-zinc-300">
@@ -317,7 +349,9 @@ function Report() {
             />
           </div>
 
-          {/* MAP */}
+          {/* ==========================================
+              MAP
+          ========================================== */}
 
           <div>
             <label className="mb-2 block text-sm text-zinc-300">
@@ -333,7 +367,9 @@ function Report() {
             />
           </div>
 
-          {/* Error */}
+          {/* ==========================================
+              ERROR
+          ========================================== */}
 
           {error && (
             <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400">
@@ -341,7 +377,9 @@ function Report() {
             </div>
           )}
 
-          {/* Success */}
+          {/* ==========================================
+              SUCCESS
+          ========================================== */}
 
           {success && (
             <div className="rounded-xl border border-[#B7FF00]/20 bg-[#B7FF00]/10 p-4 text-sm text-[#B7FF00]">
@@ -349,7 +387,9 @@ function Report() {
             </div>
           )}
 
-          {/* Submit */}
+          {/* ==========================================
+              SUBMIT
+          ========================================== */}
 
           <button
             type="submit"
