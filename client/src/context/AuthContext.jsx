@@ -18,8 +18,7 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
 
-  const [loading, setLoading] =
-    useState(true);
+  const [loading, setLoading] = useState(true);
 
   // ========================================
   // LOAD AUTH DATA ON APP START
@@ -27,17 +26,30 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     try {
-      const token =
-        localStorage.getItem("token");
+      const token = localStorage.getItem("token");
+      const savedUser = localStorage.getItem("user");
 
-      const savedUser =
-        localStorage.getItem("user");
+      // Check whether valid auth data exists
+      if (
+        token &&
+        savedUser &&
+        savedUser !== "undefined" &&
+        savedUser !== "null"
+      ) {
+        const parsedUser = JSON.parse(savedUser);
 
-      if (token && savedUser) {
-        const parsedUser =
-          JSON.parse(savedUser);
+        if (parsedUser) {
+          setUser(parsedUser);
+        } else {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+        }
+      } else {
+        // Remove invalid/old authentication data
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
 
-        setUser(parsedUser);
+        setUser(null);
       }
     } catch (error) {
       console.error(
@@ -45,6 +57,7 @@ export function AuthProvider({ children }) {
         error
       );
 
+      // Clear corrupted authentication data
       localStorage.removeItem("token");
       localStorage.removeItem("user");
 
@@ -62,8 +75,11 @@ export function AuthProvider({ children }) {
     let token;
     let user;
 
-    // New format:
+    // ========================================
+    // NEW FORMAT
     // login(data)
+    // ========================================
+
     if (
       typeof authData === "object" &&
       authData !== null
@@ -72,12 +88,19 @@ export function AuthProvider({ children }) {
       user = authData.user;
     }
 
-    // Old format:
+    // ========================================
+    // OLD FORMAT
     // login(token, userData)
+    // ========================================
+
     else {
       token = authData;
       user = userData;
     }
+
+    // ========================================
+    // VALIDATE LOGIN DATA
+    // ========================================
 
     if (!token || !user) {
       console.error(
@@ -85,8 +108,12 @@ export function AuthProvider({ children }) {
         authData
       );
 
-      return;
+      return false;
     }
+
+    // ========================================
+    // SAVE AUTH DATA
+    // ========================================
 
     localStorage.setItem(
       "token",
@@ -98,7 +125,13 @@ export function AuthProvider({ children }) {
       JSON.stringify(user)
     );
 
+    // ========================================
+    // UPDATE AUTH STATE
+    // ========================================
+
     setUser(user);
+
+    return true;
   };
 
   // ========================================
@@ -122,6 +155,10 @@ export function AuthProvider({ children }) {
     login,
     logout,
   };
+
+  // ========================================
+  // PROVIDER
+  // ========================================
 
   return (
     <AuthContext.Provider value={value}>
