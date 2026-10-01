@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
+// ========================================
+// API URL
+// ========================================
+
+const API_URL = import.meta.env.VITE_API_URL;
+
 function MyReports() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,10 +29,18 @@ function MyReports() {
         return;
       }
 
+      // Check API URL
+      if (!API_URL) {
+        throw new Error(
+          "VITE_API_URL পাওয়া যাচ্ছে না"
+        );
+      }
+
       const response = await fetch(
-        "http://import.meta.env.VITE_API_URL/api/reports/my-reports",
+        `${API_URL}/api/reports/my-reports`,
         {
           method: "GET",
+
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -37,11 +51,13 @@ function MyReports() {
 
       if (!response.ok) {
         throw new Error(
-          data.message || "রিপোর্ট পাওয়া যায়নি"
+          data.message ||
+            "রিপোর্ট পাওয়া যায়নি"
         );
       }
 
       setReports(data.reports || []);
+
     } catch (error) {
       console.error(
         "My reports error:",
@@ -99,10 +115,17 @@ function MyReports() {
         return;
       }
 
+      if (!API_URL) {
+        throw new Error(
+          "VITE_API_URL পাওয়া যাচ্ছে না"
+        );
+      }
+
       const response = await fetch(
-        `http://import.meta.env.VITE_API_URL/api/reports/my-reports/${reportId}`,
+        `${API_URL}/api/reports/my-reports/${reportId}`,
         {
           method: "DELETE",
+
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -128,6 +151,7 @@ function MyReports() {
       alert(
         "রিপোর্ট সফলভাবে মুছে ফেলা হয়েছে"
       );
+
     } catch (error) {
       console.error(
         "Delete report error:",
@@ -227,7 +251,6 @@ function MyReports() {
             </p>
           </div>
 
-
           {/* HEADER BUTTONS */}
 
           <div className="flex flex-col gap-3 sm:flex-row">
@@ -240,7 +263,6 @@ function MyReports() {
             >
               + নতুন রিপোর্ট
             </Link>
-
 
             {/* LOGOUT */}
 
@@ -255,7 +277,6 @@ function MyReports() {
           </div>
 
         </div>
-
 
         {/* ================================= */}
         {/* ERROR */}
@@ -277,7 +298,6 @@ function MyReports() {
 
           </div>
         )}
-
 
         {!error && (
           <>
@@ -302,7 +322,6 @@ function MyReports() {
 
               </div>
 
-
               {/* PENDING */}
 
               <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
@@ -322,7 +341,6 @@ function MyReports() {
                 </p>
 
               </div>
-
 
               {/* RESOLVED */}
 
@@ -345,7 +363,6 @@ function MyReports() {
               </div>
 
             </div>
-
 
             {/* ================================= */}
             {/* NO REPORTS */}
@@ -377,7 +394,6 @@ function MyReports() {
               </div>
             )}
 
-
             {/* ================================= */}
             {/* REPORT CARDS */}
             {/* ================================= */}
@@ -397,7 +413,7 @@ function MyReports() {
                       <div className="h-52 overflow-hidden bg-zinc-900">
 
                         <img
-                          src={`http://import.meta.env.VITE_API_URL${report.image}`}
+                          src={`${API_URL}${report.image}`}
                           alt={report.title}
                           className="h-full w-full object-cover"
                         />
@@ -410,7 +426,6 @@ function MyReports() {
                         </span>
                       </div>
                     )}
-
 
                     {/* CONTENT */}
 
@@ -436,20 +451,17 @@ function MyReports() {
 
                       </div>
 
-
                       {/* TITLE */}
 
                       <h2 className="mt-4 line-clamp-2 text-xl font-semibold">
                         {report.title}
                       </h2>
 
-
                       {/* DESCRIPTION */}
 
                       <p className="mt-2 line-clamp-3 text-sm leading-6 text-zinc-500">
                         {report.description}
                       </p>
-
 
                       {/* LOCATION */}
 
@@ -460,7 +472,6 @@ function MyReports() {
                         </p>
                       )}
 
-
                       {/* DATE */}
 
                       <p className="mt-4 text-xs text-zinc-600">
@@ -470,7 +481,6 @@ function MyReports() {
                           "bn-BD"
                         )}
                       </p>
-
 
                       {/* ACTIONS */}
 
@@ -485,7 +495,6 @@ function MyReports() {
                           View
                         </Link>
 
-
                         {/* EDIT */}
 
                         <Link
@@ -494,7 +503,6 @@ function MyReports() {
                         >
                           Edit
                         </Link>
-
 
                         {/* DELETE */}
 
