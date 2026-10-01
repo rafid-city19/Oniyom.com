@@ -1,22 +1,21 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { useAuth } from "../context/AuthContext";
+const API_URL = (
+  import.meta.env.VITE_API_URL || ""
+).replace(/\/$/, "");
 
-const API_URL = import.meta.env.VITE_API_URL;
-
-function AdminDashboard() {
-  const { user } = useAuth();
-
+function Explore() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [actionLoading, setActionLoading] =
-    useState(null);
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("all");
+  const [status, setStatus] = useState("all");
 
   // ========================================
-  // GET ALL REPORTS
+  // GET ALL PUBLIC REPORTS
   // ========================================
 
   const fetchReports = async () => {
@@ -24,29 +23,17 @@ function AdminDashboard() {
       setLoading(true);
       setError("");
 
-      const token =
-        localStorage.getItem("token");
-
-      if (!token) {
-        setError("আপনি লগইন করেননি");
-        return;
-      }
-
       const response = await fetch(
-        `${API_URL}/api/admin/reports`,
+        `${API_URL}/api/reports`,
         {
           method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         }
       );
 
-      const data =
-        await response.json();
+      const data = await response.json();
 
       console.log(
-        "Admin reports response:",
+        "Public reports response:",
         data
       );
 
@@ -70,7 +57,7 @@ function AdminDashboard() {
       }
     } catch (error) {
       console.error(
-        "Fetch admin reports error:",
+        "Fetch public reports error:",
         error
       );
 
@@ -91,161 +78,11 @@ function AdminDashboard() {
   }, []);
 
   // ========================================
-  // UPDATE REPORT STATUS
-  // ========================================
-
-  const updateStatus = async (
-    reportId,
-    newStatus
-  ) => {
-    try {
-      setActionLoading(reportId);
-      setError("");
-
-      const token =
-        localStorage.getItem("token");
-
-      const response = await fetch(
-        `${API_URL}/api/admin/reports/${reportId}/status`,
-        {
-          method: "PATCH",
-
-          headers: {
-            "Content-Type":
-              "application/json",
-
-            Authorization: `Bearer ${token}`,
-          },
-
-          body: JSON.stringify({
-            status: newStatus,
-          }),
-        }
-      );
-
-      const data =
-        await response.json();
-
-      console.log(
-        "Update status response:",
-        data
-      );
-
-      if (!response.ok) {
-        setError(
-          data.message ||
-            "Status update করা যায়নি"
-        );
-
-        return;
-      }
-
-      // Update report locally
-      setReports((previousReports) =>
-        previousReports.map(
-          (report) =>
-            report._id === reportId
-              ? {
-                  ...report,
-                  status:
-                    data.report?.status ||
-                    newStatus,
-                }
-              : report
-        )
-      );
-    } catch (error) {
-      console.error(
-        "Update status error:",
-        error
-      );
-
-      setError(
-        "Status update করার সময় সমস্যা হয়েছে"
-      );
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  // ========================================
-  // DELETE REPORT
-  // ========================================
-
-  const deleteReport = async (
-    reportId
-  ) => {
-    const confirmed =
-      window.confirm(
-        "আপনি কি এই report টি delete করতে চান?"
-      );
-
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      setActionLoading(reportId);
-      setError("");
-
-      const token =
-        localStorage.getItem("token");
-
-      const response = await fetch(
-        `${API_URL}/api/admin/reports/${reportId}`,
-        {
-          method: "DELETE",
-
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data =
-        await response.json();
-
-      console.log(
-        "Delete report response:",
-        data
-      );
-
-      if (!response.ok) {
-        setError(
-          data.message ||
-            "Report delete করা যায়নি"
-        );
-
-        return;
-      }
-
-      // Remove deleted report
-      setReports((previousReports) =>
-        previousReports.filter(
-          (report) =>
-            report._id !== reportId
-        )
-      );
-    } catch (error) {
-      console.error(
-        "Delete report error:",
-        error
-      );
-
-      setError(
-        "Report delete করার সময় সমস্যা হয়েছে"
-      );
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  // ========================================
   // STATUS STYLE
   // ========================================
 
-  const getStatusClass = (status) => {
-    switch (status) {
+  const getStatusClass = (reportStatus) => {
+    switch (reportStatus) {
       case "pending":
         return "border-yellow-500/20 bg-yellow-500/10 text-yellow-400";
 
@@ -264,45 +101,114 @@ function AdminDashboard() {
   };
 
   // ========================================
+  // STATUS LABEL
+  // ========================================
+
+  const getStatusLabel = (reportStatus) => {
+    switch (reportStatus) {
+      case "pending":
+        return "Pending";
+
+      case "reviewing":
+        return "Reviewing";
+
+      case "resolved":
+        return "Resolved";
+
+      case "rejected":
+        return "Rejected";
+
+      default:
+        return "Unknown";
+    }
+  };
+
+  // ========================================
   // FORMAT DATE
   // ========================================
 
   const formatDate = (date) => {
     if (!date) {
-      return "Unknown";
+      return "Unknown date";
     }
 
-    return new Date(date).toLocaleDateString(
-      "en-BD",
-      {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      }
-    );
+    const formattedDate =
+      new Date(date).toLocaleDateString(
+        "en-BD",
+        {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        }
+      );
+
+    return formattedDate;
   };
 
   // ========================================
-  // COUNTS
+  // FILTER REPORTS
   // ========================================
 
-  const pendingCount =
-    reports.filter(
-      (report) =>
-        report.status === "pending"
-    ).length;
+  const filteredReports =
+    reports.filter((report) => {
+      const searchText =
+        search.toLowerCase().trim();
 
-  const reviewingCount =
-    reports.filter(
-      (report) =>
-        report.status === "reviewing"
-    ).length;
+      const title =
+        report.title ||
+        report.name ||
+        "";
 
-  const resolvedCount =
-    reports.filter(
-      (report) =>
-        report.status === "resolved"
-    ).length;
+      const description =
+        report.description || "";
+
+      const reportCategory =
+        report.category || "";
+
+      const matchesSearch =
+        !searchText ||
+        title
+          .toLowerCase()
+          .includes(searchText) ||
+        description
+          .toLowerCase()
+          .includes(searchText) ||
+        reportCategory
+          .toLowerCase()
+          .includes(searchText);
+
+      const matchesCategory =
+        category === "all" ||
+        report.category === category;
+
+      const matchesStatus =
+        status === "all" ||
+        report.status === status;
+
+      return (
+        matchesSearch &&
+        matchesCategory &&
+        matchesStatus
+      );
+    });
+
+  // ========================================
+  // CATEGORIES
+  // ========================================
+
+  const categories = [
+    "রাস্তা",
+    "পানি",
+    "বিদ্যুৎ",
+    "ড্রেনেজ",
+    "ময়লা",
+    "নিরাপত্তা",
+    "অন্যান্য",
+  ];
+
+  // ========================================
+  // UI
+  // ========================================
 
   return (
     <div className="min-h-screen bg-[#08090b] px-6 pb-20 pt-28 text-white">
@@ -313,116 +219,204 @@ function AdminDashboard() {
         {/* HEADER */}
         {/* ================================== */}
 
-        <div className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
+        <div className="mb-10">
 
-          <div>
+          <p className="mb-2 text-xs font-medium uppercase tracking-[0.2em] text-[#B7FF00]">
+            Oniyom
+          </p>
 
-            <p className="mb-2 text-xs font-medium uppercase tracking-[0.2em] text-[#B7FF00]">
-              Admin Panel
-            </p>
+          <h1 className="text-4xl font-bold md:text-5xl">
+            Explore Problems
+          </h1>
 
-            <h1 className="text-4xl font-bold md:text-5xl">
-              Dashboard
-            </h1>
+          <p className="mt-3 max-w-2xl text-zinc-500">
+            আপনার এলাকার এবং দেশের মানুষের
+            রিপোর্ট করা সমস্যাগুলো দেখুন।
+            কোনো সমস্যা চোখে পড়লে রিপোর্ট
+            করুন।
+          </p>
 
-            <p className="mt-3 text-zinc-500">
-              Welcome,{" "}
-              {user?.name || "Admin"}
-            </p>
+        </div>
+
+        {/* ================================== */}
+        {/* SEARCH + FILTERS */}
+        {/* ================================== */}
+
+        <div className="mb-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
+
+          <div className="grid gap-4 md:grid-cols-3">
+
+            {/* SEARCH */}
+
+            <div className="md:col-span-1">
+
+              <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-zinc-500">
+                Search
+              </label>
+
+              <input
+                type="text"
+                value={search}
+                onChange={(event) =>
+                  setSearch(
+                    event.target.value
+                  )
+                }
+                placeholder="সমস্যা খুঁজুন..."
+                className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-[#B7FF00]"
+              />
+
+            </div>
+
+            {/* CATEGORY */}
+
+            <div>
+
+              <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-zinc-500">
+                Category
+              </label>
+
+              <select
+                value={category}
+                onChange={(event) =>
+                  setCategory(
+                    event.target.value
+                  )
+                }
+                className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-white outline-none transition focus:border-[#B7FF00]"
+              >
+
+                <option value="all">
+                  সব ক্যাটাগরি
+                </option>
+
+                {categories.map(
+                  (item) => (
+                    <option
+                      key={item}
+                      value={item}
+                    >
+                      {item}
+                    </option>
+                  )
+                )}
+
+              </select>
+
+            </div>
+
+            {/* STATUS */}
+
+            <div>
+
+              <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-zinc-500">
+                Status
+              </label>
+
+              <select
+                value={status}
+                onChange={(event) =>
+                  setStatus(
+                    event.target.value
+                  )
+                }
+                className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-white outline-none transition focus:border-[#B7FF00]"
+              >
+
+                <option value="all">
+                  সব Status
+                </option>
+
+                <option value="pending">
+                  Pending
+                </option>
+
+                <option value="reviewing">
+                  Reviewing
+                </option>
+
+                <option value="resolved">
+                  Resolved
+                </option>
+
+                <option value="rejected">
+                  Rejected
+                </option>
+
+              </select>
+
+            </div>
 
           </div>
 
-          <Link
-            to="/"
-            className="w-fit rounded-lg border border-zinc-800 px-4 py-2 text-sm text-zinc-400 transition hover:border-zinc-600 hover:text-white"
-          >
-            ← Back to website
-          </Link>
-
         </div>
+
+        {/* ================================== */}
+        {/* RESULT COUNT */}
+        {/* ================================== */}
+
+        {!loading && !error && (
+          <div className="mb-5 flex items-center justify-between">
+
+            <p className="text-sm text-zinc-500">
+              {filteredReports.length}{" "}
+              {filteredReports.length === 1
+                ? "report"
+                : "reports"}{" "}
+              পাওয়া গেছে
+            </p>
+
+            {(search ||
+              category !== "all" ||
+              status !== "all") && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch("");
+                  setCategory("all");
+                  setStatus("all");
+                }}
+                className="text-sm text-[#B7FF00] transition hover:underline"
+              >
+                Clear filters
+              </button>
+            )}
+
+          </div>
+        )}
 
         {/* ================================== */}
         {/* ERROR */}
         {/* ================================== */}
 
         {error && (
-          <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 px-5 py-4 text-sm text-red-400">
-            {error}
+          <div className="mb-6 rounded-2xl border border-red-500/30 bg-red-500/10 px-5 py-4">
+
+            <p className="text-sm text-red-400">
+              {error}
+            </p>
+
+            <button
+              type="button"
+              onClick={fetchReports}
+              className="mt-3 text-sm text-white underline"
+            >
+              আবার চেষ্টা করুন
+            </button>
+
           </div>
         )}
-
-        {/* ================================== */}
-        {/* STATS */}
-        {/* ================================== */}
-
-        <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-
-          {/* TOTAL */}
-
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-
-            <p className="text-sm text-zinc-500">
-              Total Reports
-            </p>
-
-            <p className="mt-2 text-3xl font-bold">
-              {reports.length}
-            </p>
-
-          </div>
-
-          {/* PENDING */}
-
-          <div className="rounded-2xl border border-yellow-500/20 bg-zinc-950 p-6">
-
-            <p className="text-sm text-zinc-500">
-              Pending
-            </p>
-
-            <p className="mt-2 text-3xl font-bold text-yellow-400">
-              {pendingCount}
-            </p>
-
-          </div>
-
-          {/* REVIEWING */}
-
-          <div className="rounded-2xl border border-blue-500/20 bg-zinc-950 p-6">
-
-            <p className="text-sm text-zinc-500">
-              Reviewing
-            </p>
-
-            <p className="mt-2 text-3xl font-bold text-blue-400">
-              {reviewingCount}
-            </p>
-
-          </div>
-
-          {/* RESOLVED */}
-
-          <div className="rounded-2xl border border-green-500/20 bg-zinc-950 p-6">
-
-            <p className="text-sm text-zinc-500">
-              Resolved
-            </p>
-
-            <p className="mt-2 text-3xl font-bold text-green-400">
-              {resolvedCount}
-            </p>
-
-          </div>
-
-        </div>
 
         {/* ================================== */}
         {/* LOADING */}
         {/* ================================== */}
 
         {loading && (
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-12 text-center">
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-16 text-center">
 
-            <p className="text-zinc-500">
+            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-zinc-700 border-t-[#B7FF00]" />
+
+            <p className="text-sm text-zinc-500">
               Reports load হচ্ছে...
             </p>
 
@@ -435,235 +429,185 @@ function AdminDashboard() {
 
         {!loading &&
           !error &&
-          reports.length === 0 && (
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-12 text-center">
+          filteredReports.length === 0 && (
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-16 text-center">
+
+              <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 text-2xl">
+                🔎
+              </div>
 
               <h2 className="text-xl font-semibold">
-                No reports found
+                কোনো report পাওয়া যায়নি
               </h2>
 
               <p className="mt-2 text-sm text-zinc-500">
-                এখনো কোনো report পাওয়া যায়নি।
+                অন্য keyword বা filter দিয়ে
+                চেষ্টা করুন।
               </p>
 
             </div>
           )}
 
         {/* ================================== */}
-        {/* REPORT TABLE */}
+        {/* REPORT GRID */}
         {/* ================================== */}
 
         {!loading &&
-          reports.length > 0 && (
-            <div className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950">
+          !error &&
+          filteredReports.length > 0 && (
+            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
 
-              <div className="overflow-x-auto">
+              {filteredReports.map(
+                (report) => {
 
-                <table className="w-full min-w-[1100px]">
+                  const title =
+                    report.title ||
+                    report.name ||
+                    "Untitled Report";
 
-                  {/* TABLE HEADER */}
+                  return (
+                    <Link
+                      key={report._id}
+                      to={`/report/${report._id}`}
+                      className="group flex h-full flex-col rounded-2xl border border-zinc-800 bg-zinc-950 p-5 transition duration-300 hover:-translate-y-1 hover:border-zinc-600 hover:bg-zinc-900"
+                    >
 
-                  <thead className="border-b border-zinc-800 bg-zinc-900/50">
+                      {/* IMAGE */}
 
-                    <tr>
+                      {report.image ? (
+                        <div className="mb-5 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900">
 
-                      <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
-                        Report
-                      </th>
+                          <img
+                            src={report.image}
+                            alt={title}
+                            className="h-48 w-full object-cover transition duration-500 group-hover:scale-105"
+                          />
 
-                      <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
-                        Category
-                      </th>
+                        </div>
+                      ) : (
+                        <div className="mb-5 flex h-48 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900">
 
-                      <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
-                        Status
-                      </th>
+                          <span className="text-4xl opacity-30">
+                            📍
+                          </span>
 
-                      <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
-                        Date
-                      </th>
+                        </div>
+                      )}
 
-                      <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
-                        Actions
-                      </th>
+                      {/* TOP ROW */}
 
-                    </tr>
+                      <div className="mb-3 flex items-center justify-between gap-3">
 
-                  </thead>
+                        <span className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1 text-xs text-zinc-400">
+                          {report.category ||
+                            "অন্যান্য"}
+                        </span>
 
-                  {/* TABLE BODY */}
+                        <span
+                          className={`rounded-lg border px-3 py-1 text-xs font-medium ${getStatusClass(
+                            report.status
+                          )}`}
+                        >
+                          {getStatusLabel(
+                            report.status
+                          )}
+                        </span>
 
-                  <tbody className="divide-y divide-zinc-800">
+                      </div>
 
-                    {reports.map(
-                      (report) => {
+                      {/* TITLE */}
 
-                        const isLoading =
-                          actionLoading ===
-                          report._id;
+                      <h2 className="line-clamp-2 text-lg font-semibold text-white transition group-hover:text-[#B7FF00]">
+                        {title}
+                      </h2>
 
-                        return (
-                          <tr
-                            key={report._id}
-                            className="transition hover:bg-zinc-900/40"
-                          >
+                      {/* DESCRIPTION */}
 
-                            {/* REPORT */}
+                      {report.description && (
+                        <p className="mt-2 line-clamp-3 text-sm leading-6 text-zinc-500">
+                          {
+                            report.description
+                          }
+                        </p>
+                      )}
 
-                            <td className="px-6 py-5">
+                      {/* LOCATION */}
 
-                              <div className="max-w-[300px]">
+                      {report.location && (
+                        <div className="mt-4 flex items-start gap-2 text-sm text-zinc-500">
 
-                                <p className="truncate font-medium text-white">
-                                  {report.title ||
-                                    report.name ||
-                                    "Untitled Report"}
-                                </p>
+                          <span>
+                            📍
+                          </span>
 
-                                <p className="mt-1 truncate text-xs text-zinc-600">
-                                  ID:{" "}
-                                  {report._id}
-                                </p>
+                          <span className="line-clamp-2">
+                            {typeof report.location ===
+                            "string"
+                              ? report.location
+                              : report.location
+                                  .address ||
+                                report.location
+                                  .name ||
+                                "Location available"}
+                          </span>
 
-                              </div>
+                        </div>
+                      )}
 
-                            </td>
+                      {/* FOOTER */}
 
-                            {/* CATEGORY */}
+                      <div className="mt-auto flex items-center justify-between border-t border-zinc-800 pt-4">
 
-                            <td className="px-6 py-5">
+                        <span className="text-xs text-zinc-600">
+                          {formatDate(
+                            report.createdAt
+                          )}
+                        </span>
 
-                              <span className="text-sm text-zinc-400">
-                                {report.category ||
-                                  "N/A"}
-                              </span>
+                        <span className="text-xs font-medium text-zinc-500 transition group-hover:text-[#B7FF00]">
+                          View report →
+                        </span>
 
-                            </td>
+                      </div>
 
-                            {/* STATUS */}
-
-                            <td className="px-6 py-5">
-
-                              <select
-                                value={
-                                  report.status ||
-                                  "pending"
-                                }
-                                disabled={
-                                  isLoading
-                                }
-                                onChange={(
-                                  event
-                                ) =>
-                                  updateStatus(
-                                    report._id,
-                                    event.target
-                                      .value
-                                  )
-                                }
-                                className={`rounded-lg border px-3 py-2 text-xs font-medium outline-none ${getStatusClass(
-                                  report.status
-                                )}`}
-                              >
-
-                                <option value="pending">
-                                  Pending
-                                </option>
-
-                                <option value="reviewing">
-                                  Reviewing
-                                </option>
-
-                                <option value="resolved">
-                                  Resolved
-                                </option>
-
-                                <option value="rejected">
-                                  Rejected
-                                </option>
-
-                              </select>
-
-                            </td>
-
-                            {/* DATE */}
-
-                            <td className="px-6 py-5">
-
-                              <span className="text-sm text-zinc-500">
-                                {formatDate(
-                                  report.createdAt
-                                )}
-                              </span>
-
-                            </td>
-
-                            {/* ACTIONS */}
-
-                            <td className="px-6 py-5">
-
-                              <div className="flex items-center gap-3">
-
-                                <Link
-                                  to={`/report/${report._id}`}
-                                  className="rounded-lg border border-zinc-800 px-3 py-2 text-xs text-zinc-400 transition hover:border-zinc-600 hover:text-white"
-                                >
-                                  View
-                                </Link>
-
-                                <button
-                                  type="button"
-                                  disabled={
-                                    isLoading
-                                  }
-                                  onClick={() =>
-                                    deleteReport(
-                                      report._id
-                                    )
-                                  }
-                                  className="rounded-lg border border-red-500/20 px-3 py-2 text-xs text-red-400 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-50"
-                                >
-                                  {isLoading
-                                    ? "..."
-                                    : "Delete"}
-                                </button>
-
-                              </div>
-
-                            </td>
-
-                          </tr>
-                        );
-                      }
-                    )}
-
-                  </tbody>
-
-                </table>
-
-              </div>
+                    </Link>
+                  );
+                }
+              )}
 
             </div>
           )}
 
         {/* ================================== */}
-        {/* REFRESH BUTTON */}
+        {/* REPORT PROBLEM CTA */}
         {/* ================================== */}
 
-        <div className="mt-6 flex justify-end">
+        {!loading && (
+          <div className="mt-12 rounded-2xl border border-zinc-800 bg-zinc-950 p-8 text-center md:p-10">
 
-          <button
-            type="button"
-            onClick={fetchReports}
-            disabled={loading}
-            className="rounded-lg border border-zinc-800 px-4 py-2 text-sm text-zinc-400 transition hover:border-zinc-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {loading
-              ? "Loading..."
-              : "↻ Refresh Reports"}
-          </button>
+            <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#B7FF00]">
+              See something wrong?
+            </p>
 
-        </div>
+            <h2 className="mt-3 text-2xl font-bold md:text-3xl">
+              আপনার এলাকার সমস্যা রিপোর্ট করুন
+            </h2>
+
+            <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-zinc-500">
+              রাস্তা, পানি, বিদ্যুৎ, ড্রেনেজ,
+              ময়লা বা অন্য কোনো জনসাধারণের
+              সমস্যা দেখলে Oniyom-এ রিপোর্ট করুন।
+            </p>
+
+            <Link
+              to="/report"
+              className="mt-6 inline-flex rounded-xl bg-[#B7FF00] px-5 py-3 text-sm font-semibold text-black transition hover:scale-[1.02]"
+            >
+              Report a Problem
+            </Link>
+
+          </div>
+        )}
 
       </div>
 
@@ -671,4 +615,4 @@ function AdminDashboard() {
   );
 }
 
-export default AdminDashboard;
+export default Explore;
