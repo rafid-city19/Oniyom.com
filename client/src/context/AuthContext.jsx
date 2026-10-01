@@ -58,7 +58,36 @@ export function AuthProvider({ children }) {
   // LOGIN
   // ========================================
 
-  const login = (token, userData) => {
+  const login = (authData, userData) => {
+    let token;
+    let user;
+
+    // New format:
+    // login(data)
+    if (
+      typeof authData === "object" &&
+      authData !== null
+    ) {
+      token = authData.token;
+      user = authData.user;
+    }
+
+    // Old format:
+    // login(token, userData)
+    else {
+      token = authData;
+      user = userData;
+    }
+
+    if (!token || !user) {
+      console.error(
+        "Invalid login data:",
+        authData
+      );
+
+      return;
+    }
+
     localStorage.setItem(
       "token",
       token
@@ -66,10 +95,10 @@ export function AuthProvider({ children }) {
 
     localStorage.setItem(
       "user",
-      JSON.stringify(userData)
+      JSON.stringify(user)
     );
 
-    setUser(userData);
+    setUser(user);
   };
 
   // ========================================
@@ -78,7 +107,6 @@ export function AuthProvider({ children }) {
 
   const logout = () => {
     localStorage.removeItem("token");
-
     localStorage.removeItem("user");
 
     setUser(null);

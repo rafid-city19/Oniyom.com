@@ -7,6 +7,8 @@ import {
 
 import LocationPicker from "../components/LocationPicker";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 function EditReport() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -58,7 +60,12 @@ function EditReport() {
 
       try {
         const response = await fetch(
-          `http://import.meta.env.VITE_API_URL/api/reports/${id}`
+          `${API_URL}/api/reports/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
 
         const data =
@@ -207,7 +214,7 @@ function EditReport() {
       }
 
       const response = await fetch(
-        `http://import.meta.env.VITE_API_URL/api/reports/my-reports/${id}`,
+        `${API_URL}/api/reports/my-reports/${id}`,
         {
           method: "PUT",
 
@@ -446,7 +453,13 @@ function EditReport() {
 
               <div className="overflow-hidden rounded-xl border border-zinc-800">
                 <img
-                  src={`http://import.meta.env.VITE_API_URL${currentImage}`}
+                  src={
+                    currentImage.startsWith(
+                      "http"
+                    )
+                      ? currentImage
+                      : `${API_URL}${currentImage}`
+                  }
                   alt="Current report"
                   className="max-h-80 w-full object-cover"
                 />
